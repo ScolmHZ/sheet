@@ -1,0 +1,123 @@
+*可以在同一个函数声明里使用多个__attribute__ 
+
+extern void die(const char *format, ...)
+
+	     __attribute__((noreturn, format(printf, 1, 2)))   */
+
+		 /* 如果使用的是非GNU C, 那么就忽略__attribute__ 
+#ifndef __GNUC__
+# define __attribute__(x) /*NOTHING*/
+
+#endif*/
+
+		 //__attribute__适用于函数的声明而不是函数的定义
+
+		 __attribute__ ()
+
+	函数:
+
+	(weak) //弱声明
+
+	(noreturn)/通知编译器函数从不返回值
+
+	(format (archetype, string-index, first-to-check))//它可以使编译器检查函数声明和函数实际调用参数之间的格式化字符串是否匹配
+
+	/*该属性只能用于带有数值类型参数的函数上。当重复调用带有数值参数的函数时，
+
+	  由于返回值是相同的，所以此时编译器可以进行优化处理，
+
+	  除第一次需要运算外，
+
+	  其它只需要返回第一次的结果就可以了，进而可以提高效率
+
+	  不能用在带有指针类型参数的函数中*/
+
+	(const)
+
+	变量:
+
+	(aligned (alignment))//该属性规定变量或结构体成员的最小的对齐格式，以字节为单位
+
+	(packed)//可以使得变量或者结构体成员使用最小的对齐方式，即对变量是一字节对齐，对域（field）是位对齐
+
+	/*其它可选的属性值还可以是：cleanup，common，nocommon，
+
+	  deprecated，mode，section，shared，
+
+	  tls_model，transparent_union，unused，
+
+	  vector_size，weak，dllimport，dlexport等*/
+
+	类型属性可以用的有:aligned, packed, transparent_union, unused, deprecated , may_alias
+
+
+
+
+	ANSI C标准中有几个标准预定义宏（也是常用的）：
+
+	__LINE__：在源代码中插入当前源代码行号；
+
+	__FILE__：在源文件中插入当前源文件名；
+
+	__DATE__：在源文件中插入当前的编译日期
+
+	__TIME__：在源文件中插入当前编译时间；
+
+	__STDC__：当要求程序严格遵循ANSI C标准时该标识被赋值为1；
+
+	__cplusplus：当编写C++程序时该标识符被定义。
+
+
+
+
+
+
+	assert()  //断言,为假直接结束程序
+
+	-pedantic ansiC标准
+
+	Treat warnings as errors in a (Gnu) Makefile
+
+	CFLAGS  += -Werror
+
+	判断矩形相交
+
+	static int hwBlobToRect(RECT_S a, RECT_S b)
+
+{
+
+if(a.s32X>=b.s32X+b.u32Width||b.s32X>=a.s32X+a.u32Width||a.s32Y>=b.s32Y+b.u32Height||b.s32Y>=a.s32Y+a.u32Height)
+
+return 1;
+
+else
+
+return 0;
+
+}
+
+sed -i "s/channel=6/channel=1/g" /mnt/mtd/Config/hostapd.conf
+
+echo -e "\033[(3,4)(0~7)m __字__底 \033[0m"
+
+tar:
+
+r:新增文件
+
+u：更新文件
+
+t：列出文件
+
+z：gz
+
+j：bz2
+
+Z:.Z
+
+f:后跟名字
+
+
+
+linux挂载文件系统为读写:
+
+include\uapi\linux\fs.h 1/0]]"

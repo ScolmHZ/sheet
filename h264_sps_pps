@@ -1,0 +1,55 @@
+00 00 00 01 67 42 00 28 E9 00 
+A0 0B 77 FE 00 02 00 03 C4 80 
+00 00 03 00 80 00 00 1A 4D 88 
+10 94 00 00 00 01 
+
+
+
+0x67的二进制是0110 0111, 以0x67为例分析如下(u: 0110 0111)： 
+
+1. forbidden_zero_bit 是禁止位，应该是第一位即u(1) = 0，1为语法有错误 
+2. nal_ref_idc是参考级别，代表被其它帧参考情况，u(2) = 11 = 3（Nal_ref_idc表示NAL的优先级，0-3， 取值越大，表示当前NAL越重要，如果当前NAL是属于参考帧的片，或是序列参数集，或是图像参数集这些重要单位时，取值必须>0) 
+	3. nal_unit_type是该帧的类型，为剩下的5位，u(5) = 0 0111 = 7 
+	目前类型有： 
+	H264定义的类型 values for nal_unit_type 
+	typedef enum { 
+	NALU_TYPE_SLICE = 1, 
+	NALU_TYPE_DPA = 2, 
+	NALU_TYPE_DPB = 3, 
+	NALU_TYPE_DPC = 4, 
+	NALU_TYPE_IDR = 5, 
+	NALU_TYPE_SEI = 6, 
+	NALU_TYPE_SPS = 7, 
+	NALU_TYPE_PPS = 8, 
+	NALU_TYPE_AUD = 9, 
+	NALU_TYPE_EOSEQ = 10, 
+	NALU_TYPE_EOSTREAM = 11, 
+	NALU_TYPE_FILL = 12, 
+	(#)if (MVC_EXTENSION_ENABLE) 
+	NALU_TYPE_PREFIX = 14, 
+	NALU_TYPE_SUB_SPS = 15, 
+	NALU_TYPE_SLC_EXT = 20, 
+	NALU_TYPE_VDRD = 24 // View and Dependency Representation Delimiter NAL Unit 
+	(#)endif 
+	} NaluType; 
+可以看出7是NALU_TYPE_SPS 即sequence parameter sets
+
+
+0x42转化为十进制则是66， 
+H264定义如下： 
+66 Baseline 
+77 Main 
+88 Extended 
+100 High (FRExt) 
+	110 High 10 (FRExt) 
+	122 High 4:2:2 (FRExt) 
+	144 High 4:4:4 (FRExt) 
+	所以0x42是66 表示Baseline
+
+
+
+	profile-level-id 的值 是从SPS的第二个字节开始的三个字节
+
+	42 00 28
+
+mp4编码的时候需要00000167后面3个双字的值

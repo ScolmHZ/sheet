@@ -1,0 +1,50 @@
+cifs挂载
+
+sudo mount -t cifs //10.10.17.72/svn ~/svn/ -o uid=533,gid=533,user=Administrator,password=123,nounix,noserverin
+
+设备挂载服务器
+
+mount 10.2.10.100:/home/share/gonglei/General /home -o  nolock,intr,rsize=1024,wsize=1024;cd /home/General
+
+dvr密码：xc3511
+
+mount
+
+mount //192.168.10.20/test /home -t cifs -o username=xiongmaitech/gonglei,password=jf0000*,unc=\\\\192.168.10.20\\test,nounix,noserverino;cd /home
+
+mount 10.10.17.72:/svn /home -o  nolock,intr,rsize=1024,wsize=1024;cd /home
+
+mount 10.2.10.100:/home/share/gonglei/ /home -o  nolock,intr,rsize=1024,wsize=1024;cd /home/General
+
+mount //192.168.10.20/svn /home -t cifs -o username=gonglei,password=jf0000*,unc=\\\\\\\\192.168.10.20\\\\svn,nounix,noserverino
+
+mount 10.10.17.72:/svn /home -o  nolock,intr,rsize=1024,wsize=1024;cd /home
+
+sudo mount -t cifs //10.10.17.72/svn ~/svn/ -o username=gonglei@xiongmaitech,noperm,nobul,noniux,noserverinfo
+
+mount / -o rw,remount 
+
+mount -t tmpfs -o size=1024m tmpfs /mnt/ram
+
+配置tftp服务器
+
+sudo apt-get install tftpd-hpa
+
+sudo apt-get install tftp-hpa
+
+sudo vim /etc/default/tftpd-hpa
+
+TFTP_USERNAME="tftp"
+
+TFTP_ADDRESS="0.0.0.0:69"
+
+TFTP_DIRECTORY="tftp根目录" #服务器目录,需要设置权限为777,chomd 777
+
+TFTP_OPTIONS="-l -c -s"
+
+sudo service tftpd-hpa restart
+
+/etc/exports
+
+smba服务器:
+安装好了之后/etc/samba/smb.conf修改连接权限

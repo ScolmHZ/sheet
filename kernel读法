@@ -1,0 +1,52 @@
+1.系统启动和初使化
+在基于Intel的系统中，通常先运行loadlin.exe或LILO，由这两个程序将内核载入内存并启
+动内核，之后便由内核控制系统。在arch/i386/kernel/head.s中可找到这一部分，head.s先进行
+一些特定体系结构的安装，然后跳转到init/main.c中的main()例程。
+2.内存管理
+有关内存管理的代码大部分都在mm中，但与特定体系结构相关的部分则保存在
+arch/*/mm中，内存缺页处理代码在mm/memory.c中，内存映射和页缓冲代码在mm/filemap.c
+	  中，实现缓冲区缓存部分代码在mm/buffer.c中，页交换代码在mm/swap_state.c和
+	  mm/swapfile.c中。
+	  3.内核
+	  大部分通用内核代码在kernel中，与特定体系结构相关的代码在arch/*/kernel中，调度进
+																	程代码在kernel/sched.c中，创建子进程代码在kernel/fork.c中，BottomHalf控制程序代码在
+																	include/linux/interrupt.h中，task_struct数据结构的定义在include/linux/sched.h中。
+																	4.PCI
+																	PCI伪驱动程序在drivers/pci/pci.c中，系统全局定义在include/linux/pci.h中。每种体系结
+																	构都有其特定的PCIBIOS代码，如AlphaAxp的代码在arch/alpha/kernel/bios32.c中。
+																	5.内部进程间通信
+																	所有相关代码都在ipc中，所有的SystemVIPC对象都有一个ipc_perm数据结构，在
+																	include/linux/ipc.h中有该数据结构的定义。SystemV的消息机制代码在ipc/msg.c中，共享内
+																	存代码在ipc/shm.c中，信号量代码在ipc/sem.c中，管道代码在ipc/pipe.c中。
+																	6.中断处理
+																	内核的中断处理代码几乎都与特定微处理器相关。Intel的中断处理代码在
+																	arch/i386/kernel/irq.c中，并且定义在include/asm-i386/irq.h中。
+																	7.设备驱动程序
+																	大部分的Linux内核源码行在设备驱动程序中，所有设备驱动程序代码在drivers中，并分
+																	为如下几类：
+																	*/block块设备驱动程序(如ide.c)。若要了解其初始化过程，参看drivers/block/genhd.c中
+的device_setup()函数，该函数不仅能初始化硬盘，也可以初始化网络。块设备包括IDE
+和SCSI设备。
+
+*/char字符设备驱动程序，例如ttys、串口和鼠标。
+*/cdromLinux的所有CDROM代码。在此可找到特定的CDROM设备(如SoundblasterCD
+		ROM)，请注意，ideCD驱动程序在drivers/block下的ide-cd.c中，而SCSICD驱动程序在
+drivers/scsi中的scsi.c中。
+*/pciPCI伪驱动程序代码，由此可了解PCI子系统是如何映射和初始化的，arch/alpha
+/kernel/bios32.c中的AlphaPCI固化代码也值得一看。
+*/scsi所有的SCSI代码，以及Linux所支持的所有scsi设备驱动程序代码。
+*/net所有网络设备驱动程序代码。
+*/sound所有声卡驱动程序代码。
+8.文件系统
+EXT2文件系统的代码都在fs/ext2/目录下，其数据结构定义在include/linux/ex2_fs.h、
+ext2_fs_i.h和ext2_fs_sb.h中，虚文件系统(VirtualFileSystem)数据结构在include/linux/fs.h中，
+代码在fs/*中，缓冲区缓存代码在fs/buffer.c中。
+		  9.网络
+		  网络部分代码在net中，其大部分的include文件在include/net中，BSD套接字代码在
+		  net/socket.c中，IP版本4INET套接字代码在net/ipv4/af_inet.c中，常用的协议支持代码(包括
+		  sk_buff控制例程)在net/core中，TCP/IP网络代码在net/ipv4中，而网络设备驱动程序在
+		  drivers/net中。
+		  10.模块
+		  内核模块代码一部分在kernel中，另一部分在模块包中，内核代码都在kernel/mcdules.c中，
+		  其数据结构和内核守护程序kerneld消息分别在include/linux/module.h和include/linux/kerneld.h
+		  中，ELF对象文件的结构定义在include/linux/elf.h中

@@ -1,0 +1,613 @@
+typedef unsigned char BYTE;     //占用空间1 bytes      0x          FF  
+
+typedef unsigned short WORD;    //占用空间2 bytes      0x       FF FF  
+
+typedef unsigned long DWORD;    //占用空间4 bytes      0x FF FF FF FF  
+
+typedef long LONG;              //占用空间4 bytes      0x FF FF FF FF 
+
+
+
+WORD bfType;       //bmp图固定为0x4d42  
+
+DWORD bfSize;      //整个bmp文件大小，包括两个头、一个颜色表和颜色数据的总大小  
+
+WORD bfReserved1;  //保留字，不考虑，设为0即可  
+
+WORD bfReserved2;  //保留字，同上  
+
+DWORD bfOffBits;   //实际位图数据的偏移字节数，即前三个部分长度之和 
+
+
+
+     
+
+DWORD biSize;         //指定此结构体的长度，为40  
+
+LONG biWidth;         //位图宽度  
+
+LONG biHeight;        //位图高度  
+
+WORD biPlanes;        //平面数，为1  
+
+WORD biBitCount;      //采用颜色位数，可以是1，2，4，8，16，24，32，这里是8  
+
+DWORD biCompression;  //压缩方式，可以是0，1，2，其中0表示不压缩  
+
+DWORD biSizeImage;    //实际位图数据占用的字节数,当biCompression为0时，可忽略不填  
+
+LONG biXPelsPerMeter; //X方向分辨率  1 in = 0.0254 m  
+
+LONG biYPelsPerMeter; //Y方向分辨率  
+
+DWORD biClrUsed;      //使用的颜色数，如果为0，则表示默认值(2^颜色位数)  
+
+DWORD biClrImportant; //重要颜色数，如果为0，则表示所有颜色都是重要的
+
+
+
+
+
+       FILE * fp = fopen( bmp_file,"wb" );  
+
+	          if( !fp ) return;  
+
+			    
+
+			         fwrite( &bfh, 8, 1,  fp );//由于linux上4字节对齐，而信息头大小为54字节，第一部分14字节，第二部分40字节，所以会将第一部分补齐为16自己，直接用sizeof，打开图片时就会遇到premature end-of-file encountered错误  
+
+					        fwrite(&bfh.bfReserved2, sizeof(bfh.bfReserved2), 1, fp);  
+
+							       fwrite(&bfh.bfOffBits, sizeof(bfh.bfOffBits), 1, fp);  
+
+								          fwrite( &bih, sizeof(BMPINFOHEADER_T),1,fp );  
+
+										         fwrite(pdata,size,1,fp);  
+
+												        fclose( fp ); 
+
+
+
+
+
+
+
+
+														Bmp图片分为2、4、8、16、24、32位图，24位及以上的图称为真彩图。何为“位”？4位表示其最多有24=16种颜色组成，8位表示其最多有28=256种颜色组成其余类似。一个Bmp图片文档由四部分组成：文件头、文件信息头、颜色表（24位及以上位图非必须）和颜色数据，下面，我们来详细说明如何填充这些数据以得到8位bmp图。
+
+
+														由于我找到的资料都是在C/C++中的，而我是在android（Java）中实现的，所以这里标明一下相关类型占用的空间，后面我需要用Java中的byte[]类型来构建整个bmp数据。
+
+
+														变量类型占用空间说明(C/C++)：
+
+
+														typedef unsigned charBYTE;     //占用空间1 bytes      0x          FF
+
+														typedef unsigned shortWORD;    //占用空间2 bytes      0x       FF FF
+
+														typedef unsigned longDWORD;    //占用空间4 bytes      0x FF FF FF FF
+
+														typedeflongLONG;              //占用空间4 bytes      0x FF FF FF FF
+
+														typedef unsigned char BYTE;     //占用空间1 bytes      0x          FF
+														typedef unsigned short WORD;    //占用空间2 bytes      0x       FF FF
+														typedef unsigned long DWORD;    //占用空间4 bytes      0x FF FF FF FF
+														typedef long LONG;              //占用空间4 bytes      0x FF FF FF FF
+														接着，我们开始构建这四个部分：文件头、文件信息头、颜色表（24位及以上位图非必须）和颜色数据
+
+
+														一、文件头：
+
+
+														文件头需占用14个字节(byte)，详细信息如下(C/C++)：
+
+
+														WORD bfType;       //bmp图固定为0x4d42
+
+														DWORD bfSize;      //整个bmp文件大小，包括两个头、一个颜色表和颜色数据的总大小
+
+														WORD bfReserved1;  //保留字，不考虑，设为0即可
+
+														WORD bfReserved2;  //保留字，同上
+
+														DWORD bfOffBits;   //实际位图数据的偏移字节数，即前三个部分长度之和
+
+														WORD bfType;       //bmp图固定为0x4d42
+														DWORD bfSize;      //整个bmp文件大小，包括两个头、一个颜色表和颜色数据的总大小
+														WORD bfReserved1;  //保留字，不考虑，设为0即可
+														WORD bfReserved2;  //保留字，同上
+														DWORD bfOffBits;   //实际位图数据的偏移字节数，即前三个部分长度之和
+
+														构建文件头的示例程序(Java)：
+
+														privatebyte[] addBMPImageHeader(int size, int lenH) {  
+														
+														    byte[] buffer = newbyte[14];  
+														
+														    int m_lenH = lenH + buffer.length;      //lenH:文件信息头
+														
+														                                                //和颜色表长度之和
+														
+														    size += m_lenH;     //size:颜色数据的长度+两个文件头长度+颜色表长度
+														
+														    buffer[0] = 0x42;   //WORD 固定为0x4D42;
+														
+														    buffer[1] = 0x4D;  
+														
+														    buffer[2] = (byte) (size >> 0);    //DWORD 文件大小
+														
+														    buffer[3] = (byte) (size >> 8);  
+														
+														    buffer[4] = (byte) (size >> 16);  
+														
+														    buffer[5] = (byte) (size >> 24);  
+														
+														    buffer[6] = 0x00;    //WORD 保留字，不考虑
+														
+														    buffer[7] = 0x00;  
+														
+														    buffer[8] = 0x00;    //WORD 保留字，不考虑
+														
+														    buffer[9] = 0x00;  
+														
+														    buffer[10] = (byte) (m_lenH >> 0);      //DWORD 实际位图数据的偏移字
+														
+														    buffer[11] = (byte) (m_lenH >> 8);      //节数，即所有三个头（文件头、
+														
+														    buffer[12] = (byte) (m_lenH >> 16);     //文件信息头、颜色表）之和  
+														
+														    buffer[13] = (byte) (m_lenH >> 24);     //14 + 40 + 1024 = 1078  
+														
+														                                                //0x0436   0x0036=40+14=54
+														
+														    return buffer;  
+														
+														}  
+
+private byte[] addBMPImageHeader(int size, int lenH) {
+	byte[] buffer = new byte[14];
+	int m_lenH = lenH + buffer.length;      //lenH:文件信息头
+                                                //和颜色表长度之和
+	size += m_lenH;     //size:颜色数据的长度+两个文件头长度+颜色表长度
+	buffer[0] = 0x42;   //WORD 固定为0x4D42;
+	buffer[1] = 0x4D;
+	buffer[2] = (byte) (size >> 0);    //DWORD 文件大小
+	buffer[3] = (byte) (size >> 8);
+	buffer[4] = (byte) (size >> 16);
+	buffer[5] = (byte) (size >> 24);
+	buffer[6] = 0x00;    //WORD 保留字，不考虑
+	buffer[7] = 0x00;
+	buffer[8] = 0x00;    //WORD 保留字，不考虑
+	buffer[9] = 0x00;
+	buffer[10] = (byte) (m_lenH >> 0);      //DWORD 实际位图数据的偏移字
+	buffer[11] = (byte) (m_lenH >> 8);      //节数，即所有三个头（文件头、
+	buffer[12] = (byte) (m_lenH >> 16);     //文件信息头、颜色表）之和  
+	buffer[13] = (byte) (m_lenH >> 24);     //14 + 40 + 1024 = 1078  
+                                                //0x0436   0x0036=40+14=54
+	return buffer;
+}
+
+
+二、文件信息头：
+
+文件信息头需占用40个字节(byte)，详细信息如下(C/C++)：
+
+
+DWORD biSize;         //指定此结构体的长度，为40
+
+LONG biWidth;         //位图宽度
+
+LONG biHeight;        //位图高度
+
+WORD biPlanes;        //平面数，为1
+
+WORD biBitCount;      //采用颜色位数，可以是1，2，4，8，16，24，32，这里是8
+
+DWORD biCompression;  //压缩方式，可以是0，1，2，其中0表示不压缩
+
+DWORD biSizeImage;    //实际位图数据占用的字节数,当biCompression为0时，可忽略不填
+
+LONG biXPelsPerMeter; //X方向分辨率  1 in = 0.0254 m
+
+LONG biYPelsPerMeter; //Y方向分辨率
+
+DWORD biClrUsed;      //使用的颜色数，如果为0，则表示默认值(2^颜色位数)
+
+DWORD biClrImportant; //重要颜色数，如果为0，则表示所有颜色都是重要的
+
+DWORD biSize;         //指定此结构体的长度，为40
+LONG biWidth;         //位图宽度
+LONG biHeight;        //位图高度
+WORD biPlanes;        //平面数，为1
+WORD biBitCount;      //采用颜色位数，可以是1，2，4，8，16，24，32，这里是8
+DWORD biCompression;  //压缩方式，可以是0，1，2，其中0表示不压缩
+DWORD biSizeImage;    //实际位图数据占用的字节数,当biCompression为0时，可忽略不填
+LONG biXPelsPerMeter; //X方向分辨率  1 in = 0.0254 m
+LONG biYPelsPerMeter; //Y方向分辨率
+DWORD biClrUsed;      //使用的颜色数，如果为0，则表示默认值(2^颜色位数)
+DWORD biClrImportant; //重要颜色数，如果为0，则表示所有颜色都是重要的
+
+构建文件信息头的示例程序(Java)：
+
+privatebyte[] addBMPImageInfosHeader(int w, int h) {  
+
+    byte[] buffer = newbyte[40];  
+
+    int ll = buffer.length;  
+
+    buffer[0] = (byte) (ll >> 0);    //DWORD：本段头长度：40   0x0028
+
+    buffer[1] = (byte) (ll >> 8);  
+
+    buffer[2] = (byte) (ll >> 16);  
+
+    buffer[3] = (byte) (ll >> 24);  
+
+    buffer[4] = (byte) (w >> 0);    //long：图片宽度
+
+    buffer[5] = (byte) (w >> 8);  
+
+    buffer[6] = (byte) (w >> 16);  
+
+    buffer[7] = (byte) (w >> 24);  
+
+    buffer[8] = (byte) (h >> 0);    //long：图片高度
+
+    buffer[9] = (byte) (h >> 8);  
+
+    buffer[10] = (byte) (h >> 16);  
+
+    buffer[11] = (byte) (h >> 24);  
+
+    buffer[12] = 0x01;           //WORD:平面数：1
+
+    buffer[13] = 0x00;  
+
+    buffer[14] = 0x08;           //WORD:图像位数：8位
+
+    buffer[15] = 0x00;  
+
+    buffer[16] = 0x00;           //DWORD：压缩方式，可以是0，1，2， 
+
+    buffer[17] = 0x00;           //其中0表示不压缩
+
+    buffer[18] = 0x00;  
+
+    buffer[19] = 0x00;  
+
+    buffer[20] = 0x00;           //DWORD；实际位图数据占用的字节数,当上一个数值
+
+    buffer[21] = 0x00;           //biCompression等于0时，这里的值可以省略不填
+
+    buffer[22] = 0x00;  
+
+    buffer[23] = 0x00;  
+
+    buffer[24] = (byte) 0x20;    //LONG：X方向分辨率
+
+    buffer[25] = 0x4E;           //20000(0x4E20) dpm  1 in = 0.0254 m
+
+    buffer[26] = 0x00;  
+
+    buffer[27] = 0x00;  
+
+    buffer[28] = (byte) 0x20;    //LONG：Y方向分辨率
+
+    buffer[29] = 0x4E;           //20000(0x4E20) dpm  1 in = 0.0254 m
+
+    buffer[30] = 0x00;  
+
+    buffer[31] = 0x00;  
+
+    buffer[32] = 0x00;           //DWORD：使用的颜色数，如果为0，
+
+    buffer[33] = 0x00;           //则表示默认值(2^颜色位数)
+
+    buffer[34] = 0x00;  
+
+    buffer[35] = 0x00;  
+
+    buffer[36] = 0x00;           //DWORD：重要颜色数，如果为0,
+
+    buffer[37] = 0x00;           //则表示所有颜色都是重要的
+
+    buffer[38] = 0x00;  
+
+    buffer[39] = 0x00;  
+
+    return buffer;  
+
+}  
+
+private byte[] addBMPImageInfosHeader(int w, int h) {
+	byte[] buffer = new byte[40];
+	int ll = buffer.length;
+	buffer[0] = (byte) (ll >> 0);    //DWORD：本段头长度：40   0x0028
+	buffer[1] = (byte) (ll >> 8);
+	buffer[2] = (byte) (ll >> 16);
+	buffer[3] = (byte) (ll >> 24);
+	buffer[4] = (byte) (w >> 0);    //long：图片宽度
+	buffer[5] = (byte) (w >> 8);
+	buffer[6] = (byte) (w >> 16);
+	buffer[7] = (byte) (w >> 24);
+	buffer[8] = (byte) (h >> 0);    //long：图片高度
+	buffer[9] = (byte) (h >> 8);
+	buffer[10] = (byte) (h >> 16);
+	buffer[11] = (byte) (h >> 24);
+	buffer[12] = 0x01;           //WORD:平面数：1
+	buffer[13] = 0x00;
+	buffer[14] = 0x08;           //WORD:图像位数：8位
+	buffer[15] = 0x00;
+	buffer[16] = 0x00;           //DWORD：压缩方式，可以是0，1，2， 
+	buffer[17] = 0x00;           //其中0表示不压缩
+	buffer[18] = 0x00;
+	buffer[19] = 0x00;
+	buffer[20] = 0x00;           //DWORD；实际位图数据占用的字节数,当上一个数值
+	buffer[21] = 0x00;           //biCompression等于0时，这里的值可以省略不填
+	buffer[22] = 0x00;
+	buffer[23] = 0x00;
+	buffer[24] = (byte) 0x20;    //LONG：X方向分辨率
+	buffer[25] = 0x4E;           //20000(0x4E20) dpm  1 in = 0.0254 m
+	buffer[26] = 0x00;
+	buffer[27] = 0x00;
+	buffer[28] = (byte) 0x20;    //LONG：Y方向分辨率
+	buffer[29] = 0x4E;           //20000(0x4E20) dpm  1 in = 0.0254 m
+	buffer[30] = 0x00;
+	buffer[31] = 0x00;
+	buffer[32] = 0x00;           //DWORD：使用的颜色数，如果为0，
+	buffer[33] = 0x00;           //则表示默认值(2^颜色位数)
+	buffer[34] = 0x00;
+	buffer[35] = 0x00;
+	buffer[36] = 0x00;           //DWORD：重要颜色数，如果为0,
+	buffer[37] = 0x00;           //则表示所有颜色都是重要的
+	buffer[38] = 0x00;
+	buffer[39] = 0x00;
+	
+	return buffer;
+}
+
+三、颜色表：
+
+颜色表因位数不同而异，24位及以上可以忽略颜色表，8位图的颜色表要包含28 = 256种颜色，每种颜色由BGRA(蓝、绿、红、保留)四个元素组成，即256 * 4 = 1024，需占用1024个字节(byte)。因此，8位图的颜色表有256组颜色，每组颜色格式如下(C/C++)：
+
+
+BYTE rgbBlue;     //该颜色的蓝色分量
+
+BYTE rgbGreen;    //该颜色的绿色分量
+
+BYTE rgbRed;      //该颜色的红色分量
+
+BYTE rgbReserved; //保留值，有人说是透明度，不过没见过bmp图能透明的，未追究
+
+BYTE rgbBlue;     //该颜色的蓝色分量
+BYTE rgbGreen;    //该颜色的绿色分量
+BYTE rgbRed;      //该颜色的红色分量
+BYTE rgbReserved; //保留值，有人说是透明度，不过没见过bmp图能透明的，未追究
+
+生成颜色表的示例程序(8位灰阶)如下(Java)：
+
+privatebyte[] addBMPImageInfosHeaderTable(int w, int h) {  
+
+    byte[] buffer = newbyte[256 * 4];  
+
+    //生成颜色表
+
+    for (int iiii = 0; iiii < 256; iiii++) {  
+	
+	        buffer[0 + 4 * iiii] = (byte) iiii;   //Blue
+	
+	        buffer[1 + 4 * iiii] = (byte) iiii;   //Green
+	
+	        buffer[2 + 4 * iiii] = (byte) iiii;   //Red
+	
+	        buffer[3 + 4 * iiii] = (byte) 0xFF;   //保留值
+	
+	    }  
+
+    return buffer;  
+
+}  
+
+private byte[] addBMPImageInfosHeaderTable(int w, int h) {
+	byte[] buffer = new byte[256 * 4];
+	
+	//生成颜色表
+	for (int iiii = 0; iiii < 256; iiii++) {
+			buffer[0 + 4 * iiii] = (byte) iiii;   //Blue
+			buffer[1 + 4 * iiii] = (byte) iiii;   //Green
+			buffer[2 + 4 * iiii] = (byte) iiii;   //Red
+			buffer[3 + 4 * iiii] = (byte) 0xFF;   //保留值
+		}
+	
+	return buffer;
+}
+
+四、颜色数据(DIB)：
+
+
+所有的DIB数据扫描行是上下颠倒的，也就是说一幅图片先绘制底部的像素，再绘制顶部的像素，所以这些DIB数据所表示的像素点就是从图片的左下角开始，一直表示到图片的右上角。
+
+
+在8位图里，每个像素点只有一个表示灰阶的值(0 - 255)，而24位及以上的位图里，每个像素点则与颜色表的元素一样，由四个值组成，四个值的排列顺序也与颜色表的相同(BGRA)。由于我们要生成的是8位图，所以无需配置每个像素点的RGB颜色。若想生成彩图，则需特别配置。
+
+
+获得经过上面配置过后的颜色数据（8位图无需配置），然后就要按照bmp图片像素点排列规则来排列数据了，示例如下(Java)：
+
+
+privatebyte[] addBMP_8(byte[] b, int w, int h) {  
+
+    int len = b.length;  
+
+    System.out.println(b.length);  
+
+    byte[] buffer = newbyte[w * h];  
+
+    int offset = 0;  
+
+    for (int i = len - 1; i >= (w - 1); i -= w) {  
+	
+	        // 对于bmp图，DIB文件格式最后一行为第一行，每行按从左到右顺序
+	
+	        int end = i, start = i - w + 1;  
+	
+	        for (int j = start; j <= end; j++) {  
+			
+			            buffer[offset] = b[j];  
+			
+			            offset ++;  
+			
+			        }  
+	
+	    }  
+
+    return buffer;  
+
+}  
+
+private byte[] addBMP_8(byte[] b, int w, int h) {
+	int len = b.length;
+	System.out.println(b.length);
+	byte[] buffer = new byte[w * h];
+	int offset = 0;
+	for (int i = len - 1; i >= (w - 1); i -= w) {
+			// 对于bmp图，DIB文件格式最后一行为第一行，每行按从左到右顺序
+			int end = i, start = i - w + 1;
+			for (int j = start; j <= end; j++) {
+						buffer[offset] = b[j];
+						offset ++;
+					}
+		}
+	return buffer;
+}
+
+至此，我们已经具备了所有生成8位bmp图片所需的函数了，下面附上调用示例(Java)：
+
+// mBitmap是前面获得的一个Bitmap，其类型为Bitmap.Config. ALPHA_8，只有ALPHA
+
+//值，无法通过getPixels函数获得颜色数据。
+
+int w = mBitmap.getWidth(), h = mBitmap.getHeight();  
+
+int[] pixels = newint[w * h];  
+
+Bitmap tmpMap = mBitmap.copy(Bitmap.Config.ARGB_8888, true);  //将mBitmap转换为ARGB_8888类型，这样就可以通过getPixels获得颜色数据了
+
+tmpMap.getPixels(pixels, 0, w, 0, 0, w, h);  
+
+byte[] pixel_only = newbyte[w * h];  
+
+for(int kk = 0; kk < w * h; kk++){  
+
+    pixel_only[kk] = (byte) (pixels[kk] >> 24);  
+
+}  
+
+byte[] rgb = addBMP_8(pixel_only, w, h);                         //排列图像数据成bmp要求格式
+
+byte[] color_table = addBMPImageInfosHeaderTable(w, h);          //颜色表，8位图必须有
+
+byte[] infos = addBMPImageInfosHeader(w, h);                     //文件信息头
+
+byte[] header = addBMPImageHeader(rgb.length, infos.length +   
+		
+		        color_table.length);                             //文件头
+
+byte[] buffer = newbyte[header.length + infos.length + color_table.length  
+
+                + rgb.length];                                   //申请用来组合上面四个部分的空间，这个空间直接保存就是bmp图了
+
+				System.arraycopy(header, 0, buffer, 0, header.length);           //复制文件头
+
+				System.arraycopy(infos, 0, buffer, header.length, infos.length); //复制文件信息头
+
+				System.arraycopy(color_table, 0, buffer, header.length + infos.length,   
+						
+						        color_table.length);                             //复制颜色表
+
+				System.arraycopy(rgb, 0, buffer, header.length + infos.length +   
+						
+						        color_table.length, rgb.length);                 //复制真正的图像数据
+
+				// mBitmap是前面获得的一个Bitmap，其类型为Bitmap.Config. ALPHA_8，只有ALPHA
+				//值，无法通过getPixels函数获得颜色数据。
+				int w = mBitmap.getWidth(), h = mBitmap.getHeight();
+				int[] pixels = new int[w * h];
+				Bitmap tmpMap = mBitmap.copy(Bitmap.Config.ARGB_8888, true);  //将mBitmap转换为ARGB_8888类型，这样就可以通过getPixels获得颜色数据了
+				tmpMap.getPixels(pixels, 0, w, 0, 0, w, h);
+				byte[] pixel_only = new byte[w * h];
+				for(int kk = 0; kk < w * h; kk++){
+					pixel_only[kk] = (byte) (pixels[kk] >> 24);
+				}
+byte[] rgb = addBMP_8(pixel_only, w, h);                         //排列图像数据成bmp要求格式
+byte[] color_table = addBMPImageInfosHeaderTable(w, h);          //颜色表，8位图必须有
+byte[] infos = addBMPImageInfosHeader(w, h);                     //文件信息头
+byte[] header = addBMPImageHeader(rgb.length, infos.length + 
+				color_table.length);                             //文件头
+byte[] buffer = new byte[header.length + infos.length + color_table.length
+                + rgb.length];                                   //申请用来组合上面四个部分的空间，这个空间直接保存就是bmp图了
+				System.arraycopy(header, 0, buffer, 0, header.length);           //复制文件头
+				System.arraycopy(infos, 0, buffer, header.length, infos.length); //复制文件信息头
+				System.arraycopy(color_table, 0, buffer, header.length + infos.length, 
+								color_table.length);                             //复制颜色表
+System.arraycopy(rgb, 0, buffer, header.length + infos.length + 
+				color_table.length, rgb.length);                 //复制真正的图像数据
+好了，现在这个buffer里就存着我们想要的bmp图， 直接把这个buffer保存即可，保存的代码就不贴了，自己google吧，急着睡觉，明天还要上班呢。
+
+
+对了，可以用UltraEdit来查看已有的的bmp图的16进制信息，这样你就可以对照着学习了。
+
+
+附上参考资料：
+
+
+1、 图像内部数据结构详解：
+
+
+http://wenku.baidu.com/link?url=mSQgdHyZ7tV_lfIg5L0Q7afEUV9uYePtO4mHU7jBZv8kB599wS66zazQ_Qkh8wCKEoPPJExb7BqBMxIymXiEBCEg5mYBAEENk5Jj-WI83RK#
+
+
+2、bmp文件格式详细解析：
+
+
+http://blog.chinaunix.net/uid-23592843-id-150648.html
+
+
+
+
+
+
+
+
+ Gray = 0.30 * R + 0.59 * G + 0.11 * B
+
+ 应用：模拟领域
+
+ Y'= 0.299*R' + 0.587*G' + 0.114*B'
+
+ U'= -0.147*R' - 0.289*G' + 0.436*B' = 0.492*(B'- Y')
+
+ V'= 0.615*R' - 0.515*G' - 0.100*B' = 0.877*(R'- Y')
+
+ R' = Y' + 1.140*V'
+
+ G' = Y' - 0.394*U' - 0.581*V'
+
+ B' = Y' + 2.032*U'
+
+ YCbCr模型来源于YUV模型。YCbCr是 YUV 颜色空间的偏移版本.
+
+ 应用：数字视频，ITU-R BT.601建议
+
+ Y’ = 0.257*R' + 0.504*G' + 0.098*B' + 16
+
+ Cb' = -0.148*R' - 0.291*G' + 0.439*B' + 128
+
+ Cr' = 0.439*R' - 0.368*G' - 0.071*B' + 128
+
+ R' = 1.164*(Y’-16) + 1.596*(Cr'-128)
+
+ G' = 1.164*(Y’-16) - 0.813*(Cr'-128) - 0.392*(Cb'-128)
+
+ B' = 1.164*(Y’-16) + 2.017*(Cb'-128)
+
